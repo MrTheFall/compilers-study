@@ -5,7 +5,7 @@ ops: + - * /
 
 keywords: var print if else while
 """
-from token import TokenType, Token 
+from lexer.token import TokenType, Token 
 
 class Lexer:
     def __init__(self, source: str):
@@ -19,6 +19,7 @@ class Lexer:
             token: Token | None = self.get_next_token()
             if token:
                 tokens.append(token)
+        tokens.append(Token(TokenType.EOF, "", self.position))
         return tokens
     
     def peek(self) -> str:
@@ -135,5 +136,17 @@ class Lexer:
             case ';':
                 self.next()
                 return Token(TokenType.SEMICOLON, ';', start_pos)
+            case '(':
+                self.next()
+                return Token(TokenType.LPAREN, '(', start_pos)
+            case ')':
+                self.next()
+                return Token(TokenType.RPAREN, ')', start_pos)
+            case '{':
+                self.next()
+                return Token(TokenType.LBRACE, '{', start_pos)
+            case '}':
+                self.next()
+                return Token(TokenType.RBRACE, '}', start_pos)
             case _:
                 raise Exception(f"Unknown character: {current_char}")

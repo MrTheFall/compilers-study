@@ -1,0 +1,125 @@
+└── VarStatement: y
+    └── BinaryExpression: TokenType.PLUS
+        ├── Number: 80.0
+        └── Variable: y
+└── VarStatement: x
+    └── Number: 63.0
+└── VarStatement: z
+    └── Number: 91.0
+└── VarStatement: alpha
+    └── Variable: y
+└── IfStatement
+    ├── BinaryExpression: TokenType.AND
+    │   ├── BinaryExpression: TokenType.GT
+    │   │   ├── Number: 23.0
+    │   │   └── Number: 20.0
+    │   └── BinaryExpression: TokenType.NEQ
+    │       ├── Variable: z
+    │       └── Number: 11.0
+    ├── BlockStatement
+    │   └── VarStatement: index
+    │       └── Number: 35.0
+    └── BlockStatement
+        ├── VarStatement: x
+        │   └── BinaryExpression: TokenType.STAR
+        │       ├── Number: 91.0
+        │       └── Variable: z
+        └── VarStatement: sum
+            └── Variable: y
+└── PrintStatement
+    └── Variable: z
+└── VarStatement: z
+    └── BinaryExpression: TokenType.SLASH
+        ├── Number: 56.0
+        └── Number: 71.0
+└── WhileStatement
+    ├── BinaryExpression: TokenType.LTEQ
+    │   ├── Variable: y
+    │   └── Number: 53.0
+    └── BlockStatement
+        ├── VarStatement: total
+        │   └── Variable: sum
+        ├── PrintStatement
+        │   └── Variable: sum
+        └── IfStatement
+            ├── BinaryExpression: TokenType.GT
+            │   ├── Variable: alpha
+            │   └── Number: 21.0
+            └── BlockStatement
+                └── ExpressionStatement
+                    └── AssignExpression: alpha =
+                        └── Number: 42.0
+└── ExpressionStatement
+    └── AssignExpression: total =
+        └── Variable: index
+└── WhileStatement
+    ├── BinaryExpression: TokenType.NEQ
+    │   ├── Number: 60.0
+    │   └── Variable: index
+    └── BlockStatement
+        ├── IfStatement
+        │   ├── BinaryExpression: TokenType.LTEQ
+        │   │   ├── Number: 53.0
+        │   │   └── Variable: x
+        │   └── BlockStatement
+        │       ├── IfStatement
+        │       │   ├── BinaryExpression: TokenType.EQEQ
+        │       │   │   ├── Number: 49.0
+        │       │   │   └── Number: 20.0
+        │       │   └── BlockStatement
+        │       │       └── VarStatement: y
+        │       │           └── Number: 92.0
+        │       ├── WhileStatement
+        │       │   ├── BinaryExpression: TokenType.GT
+        │       │   │   ├── Variable: alpha
+        │       │   │   └── Number: 55.0
+        │       │   └── BlockStatement
+        │       │       ├── PrintStatement
+        │       │       │   └── BinaryExpression: TokenType.STAR
+        │       │       │       ├── Variable: index
+        │       │       │       └── Number: 37.0
+        │       │       └── PrintStatement
+        │       │           └── Number: 12.0
+        │       └── PrintStatement
+        │           └── BinaryExpression: TokenType.PLUS
+        │               ├── Variable: y
+        │               └── Number: 90.0
+        └── WhileStatement
+            ├── BinaryExpression: TokenType.NEQ
+            │   ├── Variable: total
+            │   └── Number: 31.0
+            └── BlockStatement
+                └── PrintStatement
+                    └── Number: 73.0
+└── ExpressionStatement
+    └── AssignExpression: x =
+        └── BinaryExpression: TokenType.STAR
+            ├── Variable: alpha
+            └── Number: 34.0
+└── PrintStatement
+    └── BinaryExpression: TokenType.SLASH
+        ├── Variable: total
+        └── Number: 45.0
+└── WhileStatement
+    ├── BinaryExpression: TokenType.OR
+    │   ├── BinaryExpression: TokenType.LTEQ
+    │   │   ├── Variable: z
+    │   │   └── Number: 39.0
+    │   └── BinaryExpression: TokenType.LT
+    │       ├── Variable: y
+    │       └── Variable: sum
+    └── BlockStatement
+        └── IfStatement
+            ├── BinaryExpression: TokenType.EQEQ
+            │   ├── Number: 8.0
+            │   └── Number: 58.0
+            ├── BlockStatement
+            │   └── PrintStatement
+            │       └── BinaryExpression: TokenType.MINUS
+            │           ├── Variable: z
+            │           └── Variable: sum
+            └── BlockStatement
+                ├── VarStatement: sum
+                │   └── Number: 79.0
+                └── PrintStatement
+                    └── Number: 96.0

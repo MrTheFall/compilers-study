@@ -1,0 +1,45 @@
+var y = 80 + y;
+var x = 63;
+var z = 91;
+var alpha = y;
+if ((23 > 20) && (z != 11)) {
+    var index = 35;
+} else {
+    var x = 91 * z;
+    var sum = y;
+}
+print z;
+var z = 56 / 71;
+while (y <= 53) {
+    var total = sum;
+    print sum;
+    if (alpha > 21) {
+        alpha = 42;
+    }
+}
+total = index;
+while (60 != index) {
+    if (53 <= x) {
+        if (49 == 20) {
+            var y = 92;
+        }
+        while (alpha > 55) {
+            print index * 37;
+            print 12;
+        }
+        print y + 90;
+    }
+    while (total != 31) {
+        print 73;
+    }
+}
+x = alpha * 34;
+print total / 45;
+while ((z <= 39) || (y < sum)) {
+    if (8 == 58) {
+        print z - sum;
+    } else {
+        var sum = 79;
+        print 96;
+    }
+}
