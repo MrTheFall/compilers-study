@@ -1,5 +1,5 @@
 from lexer.token import Token, TokenType
-from parser.ast.expression import Expression, NumberExpression, StringExpression, VariableExpression, BinaryExpression, UnaryExpression, AssignExpression
+from parser.ast.expression import Expression, NumberExpression, StringExpression, BooleanExpression, VariableExpression, BinaryExpression, UnaryExpression, AssignExpression
 from parser.ast.statement import Statement, ExpressionStatement, PrintStatement, VarStatement, BlockStatement, IfStatement, WhileStatement
 
 class Parser:
@@ -141,8 +141,14 @@ class Parser:
 
     def parse_primary(self) -> Expression:
         if self.match(TokenType.NUMBER):
-            value = float(self.previous().value)
+            value = int(self.previous().value)
             return NumberExpression(value)
+        if self.match(TokenType.STRING):
+            return StringExpression(self.previous().value)
+        if self.match(TokenType.TRUE):
+            return BooleanExpression(True)
+        if self.match(TokenType.FALSE):
+            return BooleanExpression(False)
         if self.match(TokenType.ID):
             return VariableExpression(self.previous().value)
         if self.match(TokenType.LPAREN):

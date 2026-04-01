@@ -4,12 +4,16 @@ class Expression:
     pass
 
 class NumberExpression(Expression):
-    def __init__(self, value: float):
+    def __init__(self, value: int):
         self.value = value
 
 class StringExpression(Expression):
     def __init__(self, value: str):
-        self.value = f"{value}"
+        self.value = value
+
+class BooleanExpression(Expression):
+    def __init__(self, value: bool):
+        self.value = value
 
 class VariableExpression(Expression):
     def __init__(self, name: str):

@@ -1,5 +1,5 @@
 from .expression import (
-    Expression, NumberExpression, StringExpression, 
+    Expression, NumberExpression, StringExpression, BooleanExpression,
     VariableExpression, BinaryExpression, UnaryExpression, AssignExpression
 )
 from .statement import (

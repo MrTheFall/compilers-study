@@ -5,6 +5,8 @@ class TokenType(Enum):
     ID = auto()
     STRING = auto()
     NUMBER = auto()
+    TRUE = auto()
+    FALSE = auto()
     VAR = auto()
     
     PRINT = auto()
@@ -40,13 +42,26 @@ class TokenType(Enum):
     EOF = auto()
 
 class Token:
-    def __init__(self, type: TokenType, value: str, position: int):
+    def __init__(
+        self,
+        type: TokenType,
+        value: str,
+        position: int,
+        line: int = 1,
+        column: int = 1,
+    ):
         self.type: TokenType = type
         self.value: str = value
         self.position: int = position
+        self.line: int = line
+        self.column: int = column
 
     def __repr__(self) -> str:
-        return f"Token(type={self.type}, value={self.value!r}, position={self.position})"
+        return (
+            "Token("
+            f"type={self.type}, value={self.value!r}, position={self.position}, "
+            f"line={self.line}, column={self.column})"
+        )
 
 
     
