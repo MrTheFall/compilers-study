@@ -8,11 +8,14 @@ from parser.ast import (
     BinaryExpression,
     BlockStatement,
     BooleanExpression,
+    CallExpression,
     Expression,
     ExpressionStatement,
+    FunctionStatement,
     IfStatement,
     NumberExpression,
     PrintStatement,
+    ReturnStatement,
     Statement,
     StringExpression,
     UnaryExpression,
@@ -27,6 +30,7 @@ class DataType(Enum):
     NUMBER = auto()
     STRING = auto()
     BOOLEAN = auto()
+    FUNCTION = auto()
 
     def __str__(self) -> str:
         return self.name.lower()
@@ -39,11 +43,13 @@ class VariableInfo:
         is_initialized: bool = False,
         is_used: bool = False,
         data_type: DataType = DataType.UNKNOWN,
+        arity: int | None = None,
     ):
         self.is_defined = is_defined
         self.is_initialized = is_initialized
         self.is_used = is_used
         self.data_type = data_type
+        self.arity = arity
 
     def clone(self) -> "VariableInfo":
         return VariableInfo(
@@ -51,6 +57,7 @@ class VariableInfo:
             is_initialized=self.is_initialized,
             is_used=self.is_used,
             data_type=self.data_type,
+            arity=self.arity,
         )
 
 class SemanticAnalyzer:
@@ -58,11 +65,13 @@ class SemanticAnalyzer:
         self.scopes: list[dict[str, VariableInfo]] = []
         self.errors: list[str] = []
         self.warnings: list[str] = []
+        self.function_depth = 0
 
     def analyze(self, statements: list[Statement]) -> tuple[list[str], list[str]]:
         self.scopes.clear()
         self.errors.clear()
         self.warnings.clear()
+        self.function_depth = 0
         self.begin_scope()
         for statement in statements:
             self.analyze_statement(statement)
@@ -82,9 +91,20 @@ class SemanticAnalyzer:
             info = self.declare_variable(statement.name)
             if statement.initializer is not None:
                 expression_type = self.analyze_expression(statement.initializer)
-                if info is not None and expression_type != DataType.UNKNOWN:
-                    info.data_type = expression_type
+                if info is not None:
                     info.is_initialized = True
+                    if expression_type != DataType.UNKNOWN:
+                        info.data_type = expression_type
+            return
+
+        if isinstance(statement, FunctionStatement):
+            self.analyze_function_statement(statement)
+            return
+
+        if isinstance(statement, ReturnStatement):
+            if self.function_depth == 0:
+                self.errors.append("semantic error: return is allowed only inside a function")
+            self.analyze_expression(statement.value)
             return
 
         if isinstance(statement, BlockStatement):
@@ -127,6 +147,12 @@ class SemanticAnalyzer:
                 self.errors.append(f"semantic error: {expression.name} is not declared")
                 return DataType.UNKNOWN
 
+            if info.data_type == DataType.FUNCTION:
+                self.errors.append(
+                    f"semantic error: function {expression.name} cannot be used as a value"
+                )
+                return DataType.UNKNOWN
+
             info.is_used = True
             if not info.is_initialized:
                 self.errors.append(f"semantic error: {expression.name} is not initialized")
@@ -152,6 +178,7 @@ class SemanticAnalyzer:
                 return DataType.UNKNOWN
 
             if value_type == DataType.UNKNOWN:
+                info.is_initialized = True
                 return info.data_type
 
             if info.data_type == DataType.UNKNOWN:
@@ -169,7 +196,61 @@ class SemanticAnalyzer:
             info.is_initialized = True
             return info.data_type
 
+        if isinstance(expression, CallExpression):
+            return self.analyze_call_expression(expression)
+
         self.errors.append(f"semantic error: unsupported expression {type(expression).__name__}")
+        return DataType.UNKNOWN
+
+    def analyze_function_statement(self, statement: FunctionStatement) -> None:
+        info = self.declare_function(statement.name, len(statement.parameters))
+        if info is None:
+            return
+
+        self.begin_scope()
+        self.function_depth += 1
+        try:
+            seen_parameters: set[str] = set()
+            for parameter in statement.parameters:
+                if parameter in seen_parameters:
+                    self.errors.append(
+                        f"semantic error: parameter {parameter} is already declared "
+                        f"in function {statement.name}"
+                    )
+                    continue
+                seen_parameters.add(parameter)
+
+                parameter_info = self.declare_variable(parameter)
+                if parameter_info is not None:
+                    parameter_info.is_initialized = True
+
+            for nested_statement in statement.body.statements:
+                self.analyze_statement(nested_statement)
+        finally:
+            self.function_depth -= 1
+            self.end_scope()
+
+    def analyze_call_expression(self, expression: CallExpression) -> DataType:
+        info = self.resolve_variable(expression.callee_name)
+        if info is None or info.data_type != DataType.FUNCTION:
+            self.errors.append(
+                f"semantic error: function {expression.callee_name} is not declared"
+            )
+            for argument in expression.arguments:
+                self.analyze_expression(argument)
+            return DataType.UNKNOWN
+
+        info.is_used = True
+        if info.arity != len(expression.arguments):
+            self.errors.append(
+                "semantic error: function "
+                f"{expression.callee_name} expects {info.arity} arguments, "
+                f"got {len(expression.arguments)}"
+            )
+
+        for argument in expression.arguments:
+            self.analyze_expression(argument)
+
         return DataType.UNKNOWN
 
     def begin_scope(self) -> None:
@@ -187,6 +268,20 @@ class SemanticAnalyzer:
             self.errors.append(f"semantic error: {name} is already declared in this scope")
             return None
         current_scope[name] = VariableInfo(True, False, False)
+        return current_scope[name]
+
+    def declare_function(self, name: str, arity: int) -> VariableInfo | None:
+        current_scope = self.scopes[-1]
+        if name in current_scope:
+            self.errors.append(f"semantic error: {name} is already declared in this scope")
+            return None
+        current_scope[name] = VariableInfo(
+            is_defined=True,
+            is_initialized=True,
+            is_used=False,
+            data_type=DataType.FUNCTION,
+            arity=arity,
+        )
         return current_scope[name]
 
     def resolve_variable(self, name: str) -> VariableInfo | None:

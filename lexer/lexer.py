@@ -3,7 +3,7 @@ var x = 2;
 print x + 5;
 ops: + - * /
 
-keywords: var print if else while true false
+keywords: var print if else while fun return true false
 """
 from lexer.token import TokenType, Token 
 
@@ -128,6 +128,10 @@ class Lexer:
                 return Token(TokenType.ELSE, word, start_pos, start_line, start_column)
             case 'while':
                 return Token(TokenType.WHILE, word, start_pos, start_line, start_column)
+            case 'fun':
+                return Token(TokenType.FUN, word, start_pos, start_line, start_column)
+            case 'return':
+                return Token(TokenType.RETURN, word, start_pos, start_line, start_column)
             case 'true':
                 return Token(TokenType.TRUE, word, start_pos, start_line, start_column)
             case 'false':
@@ -204,6 +208,9 @@ class Lexer:
             case ';':
                 self.next()
                 return Token(TokenType.SEMICOLON, ';', start_pos, start_line, start_column)
+            case ',':
+                self.next()
+                return Token(TokenType.COMMA, ',', start_pos, start_line, start_column)
             case '(':
                 self.next()
                 return Token(TokenType.LPAREN, '(', start_pos, start_line, start_column)

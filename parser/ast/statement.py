@@ -30,3 +30,13 @@ class WhileStatement(Statement):
     def __init__(self, condition: Expression, body: Statement):
         self.condition = condition
         self.body = body
+
+class FunctionStatement(Statement):
+    def __init__(self, name: str, parameters: list[str], body: BlockStatement):
+        self.name = name
+        self.parameters = parameters
+        self.body = body
+
+class ReturnStatement(Statement):
+    def __init__(self, value: Expression | None):
+        self.value = value

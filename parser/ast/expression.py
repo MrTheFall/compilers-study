@@ -34,3 +34,8 @@ class AssignExpression(Expression):
     def __init__(self, name: str, value: Expression):
         self.name = name
         self.value = value
+
+class CallExpression(Expression):
+    def __init__(self, callee_name: str, arguments: list[Expression]):
+        self.callee_name = callee_name
+        self.arguments = arguments

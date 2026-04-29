@@ -1,6 +1,26 @@
 from lexer.token import Token, TokenType
-from parser.ast.expression import Expression, NumberExpression, StringExpression, BooleanExpression, VariableExpression, BinaryExpression, UnaryExpression, AssignExpression
-from parser.ast.statement import Statement, ExpressionStatement, PrintStatement, VarStatement, BlockStatement, IfStatement, WhileStatement
+from parser.ast.expression import (
+    AssignExpression,
+    BinaryExpression,
+    BooleanExpression,
+    CallExpression,
+    Expression,
+    NumberExpression,
+    StringExpression,
+    UnaryExpression,
+    VariableExpression,
+)
+from parser.ast.statement import (
+    BlockStatement,
+    ExpressionStatement,
+    FunctionStatement,
+    IfStatement,
+    PrintStatement,
+    ReturnStatement,
+    Statement,
+    VarStatement,
+    WhileStatement,
+)
 
 class Parser:
     def __init__(self, tokens: list[Token]):
@@ -14,6 +34,8 @@ class Parser:
         return statements
 
     def parse_declaration(self) -> Statement:
+        if self.match(TokenType.FUN):
+            return self.parse_function_declaration()
         if self.match(TokenType.VAR):
             return self.parse_var_declaration()
         return self.parse_statement()
@@ -25,9 +47,28 @@ class Parser:
             return self.parse_while_statement()
         if self.match(TokenType.PRINT):
             return self.parse_print_statement()
+        if self.match(TokenType.RETURN):
+            return self.parse_return_statement()
         if self.match(TokenType.LBRACE):
             return BlockStatement(self.parse_block())
         return self.parse_expression_statement()
+
+    def parse_function_declaration(self) -> Statement:
+        name = self.consume(TokenType.ID, "Ожидается имя функции.")
+        self.consume(TokenType.LPAREN, "Ожидается '(' после имени функции.")
+
+        parameters = []
+        if not self.check(TokenType.RPAREN):
+            while True:
+                parameter = self.consume(TokenType.ID, "Ожидается имя параметра.")
+                parameters.append(parameter.value)
+                if not self.match(TokenType.COMMA):
+                    break
+
+        self.consume(TokenType.RPAREN, "Ожидается ')' после параметров функции.")
+        self.consume(TokenType.LBRACE, "Ожидается '{' перед телом функции.")
+        body = BlockStatement(self.parse_block())
+        return FunctionStatement(name.value, parameters, body)
 
     def parse_var_declaration(self) -> Statement:
         name = self.consume(TokenType.ID, "Ожидается имя переменной.")
@@ -58,6 +99,13 @@ class Parser:
         value = self.parse_expression()
         self.consume(TokenType.SEMICOLON, "Ожидается ';' после значения.")
         return PrintStatement(value)
+
+    def parse_return_statement(self) -> Statement:
+        value = None
+        if not self.check(TokenType.SEMICOLON):
+            value = self.parse_expression()
+        self.consume(TokenType.SEMICOLON, "Ожидается ';' после оператора return.")
+        return ReturnStatement(value)
 
     def parse_expression_statement(self) -> Statement:
         expr = self.parse_expression()
@@ -137,7 +185,29 @@ class Parser:
             op = self.previous().type
             right = self.parse_unary()
             return UnaryExpression(op, right)
-        return self.parse_primary()
+        return self.parse_call()
+
+    def parse_call(self) -> Expression:
+        expr = self.parse_primary()
+
+        while self.match(TokenType.LPAREN):
+            arguments = []
+            if not self.check(TokenType.RPAREN):
+                while True:
+                    arguments.append(self.parse_expression())
+                    if not self.match(TokenType.COMMA):
+                        break
+
+            paren = self.consume(TokenType.RPAREN, "Ожидается ')' после аргументов.")
+            if not isinstance(expr, VariableExpression):
+                raise Exception(
+                    f"[Parser Error] Line {paren.line}, Col {paren.column}: "
+                    "Ожидается имя функции перед '('."
+                )
+
+            expr = CallExpression(expr.name, arguments)
+
+        return expr
 
     def parse_primary(self) -> Expression:
         if self.match(TokenType.NUMBER):

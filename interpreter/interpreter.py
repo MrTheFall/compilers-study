@@ -6,11 +6,14 @@ from parser.ast import (
     BinaryExpression,
     BlockStatement,
     BooleanExpression,
+    CallExpression,
     Expression,
     ExpressionStatement,
+    FunctionStatement,
     IfStatement,
     NumberExpression,
     PrintStatement,
+    ReturnStatement,
     Statement,
     StringExpression,
     UnaryExpression,
@@ -20,11 +23,16 @@ from parser.ast import (
 )
 
 
-RuntimeValue = int | float | str | bool
+RuntimeValue = int | float | str | bool | None
 
 
 class InterpreterRuntimeError(Exception):
     pass
+
+
+class ReturnSignal(Exception):
+    def __init__(self, value: RuntimeValue):
+        self.value = value
 
 
 _UNINITIALIZED = object()
@@ -34,14 +42,21 @@ class Interpreter:
     def __init__(self, max_loop_iterations: int = 10000):
         self.max_loop_iterations = max_loop_iterations
         self.scopes: list[dict[str, RuntimeValue | object]] = []
+        self.function_scopes: list[dict[str, FunctionStatement]] = []
         self.output: list[str] = []
 
     def interpret(self, statements: list[Statement]) -> list[str]:
         self.scopes = [{}]
+        self.function_scopes = [{}]
         self.output = []
 
-        for statement in statements:
-            self.execute_statement(statement)
+        try:
+            for statement in statements:
+                self.execute_statement(statement)
+        except ReturnSignal as error:
+            raise InterpreterRuntimeError(
+                "[Interpreter Error] return is allowed only inside a function"
+            ) from error
 
         return self.output.copy()
 
@@ -71,6 +86,16 @@ class Interpreter:
                 value = self.evaluate_expression(statement.initializer)
             self.declare_variable(statement.name, value)
             return
+
+        if isinstance(statement, FunctionStatement):
+            self.declare_function(statement.name, statement)
+            return
+
+        if isinstance(statement, ReturnStatement):
+            value = None
+            if statement.value is not None:
+                value = self.evaluate_expression(statement.value)
+            raise ReturnSignal(value)
 
         if isinstance(statement, BlockStatement):
             self.execute_block(statement.statements)
@@ -132,6 +157,9 @@ class Interpreter:
             self.assign_variable(expression.name, value)
             return value
 
+        if isinstance(expression, CallExpression):
+            return self.evaluate_call(expression)
+
         if isinstance(expression, UnaryExpression):
             return self.evaluate_unary(expression)
 
@@ -141,6 +169,35 @@ class Interpreter:
         raise InterpreterRuntimeError(
             f"[Interpreter Error] Unsupported expression {type(expression).__name__}"
         )
+
+    def evaluate_call(self, expression: CallExpression) -> RuntimeValue:
+        function = self.get_function(expression.callee_name)
+        if len(expression.arguments) != len(function.parameters):
+            raise InterpreterRuntimeError(
+                "[Interpreter Error] Function "
+                f"{expression.callee_name} expects {len(function.parameters)} arguments, "
+                f"got {len(expression.arguments)}"
+            )
+
+        arguments = [
+            self.evaluate_expression(argument)
+            for argument in expression.arguments
+        ]
+
+        self.begin_scope()
+        try:
+            for parameter, argument in zip(function.parameters, arguments, strict=True):
+                self.declare_variable(parameter, argument)
+
+            try:
+                for statement in function.body.statements:
+                    self.execute_statement(statement)
+            except ReturnSignal as signal:
+                return signal.value
+        finally:
+            self.end_scope()
+
+        return None
 
     def evaluate_unary(self, expression: UnaryExpression) -> RuntimeValue:
         value = self.evaluate_expression(expression.right)
@@ -231,17 +288,38 @@ class Interpreter:
 
     def begin_scope(self) -> None:
         self.scopes.append({})
+        self.function_scopes.append({})
 
     def end_scope(self) -> None:
         self.scopes.pop()
+        self.function_scopes.pop()
 
     def declare_variable(self, name: str, value: RuntimeValue | object) -> None:
         current_scope = self.scopes[-1]
-        if name in current_scope:
+        if name in current_scope or name in self.function_scopes[-1]:
             raise InterpreterRuntimeError(
                 f"[Interpreter Error] Variable {name} is already declared in this scope"
             )
         current_scope[name] = value
+
+    def declare_function(self, name: str, function: FunctionStatement) -> None:
+        current_scope = self.function_scopes[-1]
+        if name in current_scope or name in self.scopes[-1]:
+            raise InterpreterRuntimeError(
+                f"[Interpreter Error] Function {name} is already declared in this scope"
+            )
+        current_scope[name] = function
+
+    def get_function(self, name: str) -> FunctionStatement:
+        for index in range(len(self.function_scopes) - 1, -1, -1):
+            if name in self.scopes[index]:
+                break
+            if name in self.function_scopes[index]:
+                return self.function_scopes[index][name]
+
+        raise InterpreterRuntimeError(
+            f"[Interpreter Error] Function {name} is not declared"
+        )
 
     def assign_variable(self, name: str, value: RuntimeValue) -> None:
         for scope in reversed(self.scopes):
@@ -340,4 +418,3 @@ class Interpreter:
             TokenType.EXCL: "!",
         }
         return operators.get(operator, operator.name)
-
